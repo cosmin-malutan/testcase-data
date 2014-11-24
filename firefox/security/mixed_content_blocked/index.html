@@ -2,7 +2,6 @@
 <html>
   <head>
     <title>Test Mixed Content Blocking</title>
-    <link rel="stylesheet" type="text/css" href="http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/style/insecure_style.css" />
     <link rel="stylesheet" type="text/css" href="style/style.css" />
   </head>
   <body onload="runTests();">
@@ -58,6 +57,7 @@
       o.data = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/object.html";
       document.getElementById("result3").appendChild(o);
 
+      <link rel="stylesheet" type="text/css" href="http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/style/insecure_style.css" />
       // Test 4:
       // check if the insecure stylesheet loaded
       log("Checking insecure stylesheet status");
