@@ -1,0 +1,669 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+
+<window align="start" width="600" height="600" onload="init()"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"> 
+
+<!-- This is a manual test for drag and drop. It tests all sorts of things,
+     such as having the data, dropEffect and effectAllowed set in the
+     dataTransfer properly for each event, as well as ensuring that the right
+     access privileges are used. It also tests the old drag service API.
+      -->
+
+<description style="white-space: pre;">
+  1. Drag each happy face onto the box with the purple border but don't release the mouse.
+  2. Hover over the box and move the mouse until the box turns orange and/or the text 'Drop Now' appears.
+  3. Drop the happy face by releasing the mouse. If the top row of faces is dragged, a copy
+     of the happy face should appear in the box. For the bottom row of faces, a drop is not
+     valid so a happy face should not appear in the box.
+  4. Repeat for each happy face.
+
+  The test has passed after all happy faces are dragged if the box turns green and displays
+  the text 'PASSED ALL TESTS'. The test has failed if the box turns red at any time.
+</description>
+
+<script type="application/x-javascript">
+<![CDATA[
+
+var gIsSynthesized = false;
+var gSources = { };
+var gEvents = { };
+var gDragSource = null;
+var gFailed = "";
+var gInitialEffectAllowed = ""; // the effectAllowed set during the draggesture
+var gExpectedDropEffect = ""; // the dropEffect that is expected on drop
+
+const nsIDragService = Components.interfaces.nsIDragService;
+var dragService;
+function init()
+{
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+  dragService = Components.classes["@mozilla.org/widget/dragservice;1"].
+                  getService(nsIDragService);
+}
+
+function dodrop(event)
+{
+  try {
+
+  if (gIsSynthesized)
+    return;
+
+  document.getElementById("area").style.border = "2px solid purple";
+  document.getElementById("caption").label = "Drag Image Below";
+
+  if (gEvents["dragover"] < 16)
+    is(0, 1, "Don't drop image until box border turns orange");
+
+  var text;
+  if (gDragSource && gDragSource.id.indexOf("image-old") == 0) {
+    netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+
+    var trans = Components.classes["@mozilla.org/widget/transferable;1"].
+                  createInstance(Components.interfaces.nsITransferable);
+    trans.addDataFlavor("text/unicode");
+    dragService.getCurrentSession().getData(trans, 0);
+
+    var str = { }, strlen = { };
+    trans.getTransferData("text/unicode", str, strlen);
+    if (!str.value)
+      return;
+
+    var strisupports = str.value.QueryInterface(Components.interfaces.nsISupportsString);
+
+    text = strisupports.data;
+
+    var dt = event.dataTransfer;
+    is(dt.getData("text/plain"), "happy.png", event.type + " still contains text/plain data");
+    if (gDragSource.id == "image-old-multi")
+      is(dt.mozGetDataAt("text/plain", 1), "Second Text", event.type + " still contains text/plain data second item");
+  }
+  else {
+    var dt = event.dataTransfer;
+    text = dt.getData("text/plain");
+  }
+
+  if (event.type == "dragdrop")
+    return;
+
+  if (text && (text == "happy.png" || text == "Chrome Set Text")) {
+    var newimage = document.createElement("image");
+    newimage.setAttribute("src", document.getElementById("image-new").src);
+    newimage.width = 40;
+    newimage.height = 40;
+    document.getElementById("area").appendChild(newimage);
+  }
+
+  } catch (ex) { is("Exception", ex, "Exception"); }
+}
+
+function startDrag(event, dropEffect, effectAllowed)
+{
+  try {
+
+  gDragSource = event.target;
+  gInitialEffectAllowed = "uninitialized";
+  gExpectedDropEffect = "move";
+  document.getElementById("area").style.border = "2px solid purple";
+  document.getElementById("caption").label = "Don't Drop Yet";
+
+  var str = gDragSource.src.indexOf("data") == 0 ? "happy.png" : "ERROR";
+  if (gDragSource.id.indexOf("image-old") == -1) {
+    var dt = event.dataTransfer;
+    if (dropEffect) {
+      dt.dropEffect = dropEffect;
+      gExpectedDropEffect = gDragSource.getAttribute("dropeffectover") || "move";
+    }
+    if (effectAllowed) {
+      dt.effectAllowed = effectAllowed;
+      gInitialEffectAllowed = effectAllowed;
+    }
+
+    if (gDragSource.id == "image-chrome-before") {
+      // the outer chrome window already set some data, so we shouldn't be able to
+      // access or modify it
+      expectError(function() dt.setData("text/plain", str),
+                  "NS_ERROR_DOM_SECURITY_ERR", "setData with chrome already set");
+      expectError(function() dt.mozSetDataAt("text/plain", str, 0),
+                  "NS_ERROR_DOM_SECURITY_ERR", "setDataAt with chrome already set");
+      expectError(function() dt.clearData("text/plain"),
+                  "NS_ERROR_DOM_SECURITY_ERR", "clearData with chrome already set");
+      expectError(function() dt.mozClearDataAt("text/plain", 0),
+                  "NS_ERROR_DOM_SECURITY_ERR", "clearDataAt with chrome already set");
+      expectError(function() dt.setData("text/unicode", str),
+                  "NS_ERROR_DOM_SECURITY_ERR", "setData with chrome already set text/unicode");
+      expectError(function() dt.clearData("text/unicode"),
+                  "NS_ERROR_DOM_SECURITY_ERR", "clearData with chrome already set text/unicode");
+      expectError(function() dt.setData("Text", str),
+                  "NS_ERROR_DOM_SECURITY_ERR", "setData with chrome already set Text");
+      expectError(function() dt.clearData("Text"),
+                  "NS_ERROR_DOM_SECURITY_ERR", "clearData with chrome already set Text");
+      // but setting other types should still work
+      dt.setData("text/xml", "<data>image.png</data>");
+    }
+    else {
+      dt.setData("text/plain", str);
+    }
+
+    if (gDragSource.id == "image-new") {
+      // for this image, add some additional data
+      dt.setData("text/html", "<img src='happy.png'>");
+      dt.mozSetDataAt("application/-moz-node", gDragSource, 1);
+    }
+    return;
+  }
+
+  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+
+  var transArray = Components.classes["@mozilla.org/supports-array;1"].
+                     createInstance(Components.interfaces.nsISupportsArray);
+  if (!transArray)
+    return;
+
+  for each (var texttoadd in [str, "Second Text"]) {
+    var trans = Components.classes["@mozilla.org/widget/transferable;1"].
+                createInstance(Components.interfaces.nsITransferable);
+    if (!trans) 
+      return;
+
+    var genTextData = Components.classes["@mozilla.org/supports-string;1"].
+                        createInstance(Components.interfaces.nsISupportsString);
+    if (!genTextData) 
+      return;
+
+    genTextData.data = texttoadd;
+    trans.addDataFlavor("text/unicode");
+    trans.setTransferData("text/unicode", genTextData, texttoadd.length * 2);
+
+    var genTrans = trans.QueryInterface(Components.interfaces.nsISupports);
+    transArray.AppendElement(genTrans);
+
+    if (gDragSource.id == "image-old")
+      break;
+  }
+
+  gInitialEffectAllowed = "move";
+
+  var target = event.target;
+  if (target.localName == "box")
+    target = target.firstChild;
+
+  dragService.invokeDragSession(event.target, transArray, null,
+                                nsIDragService.DRAGDROP_ACTION_COPY +
+                                nsIDragService.DRAGDROP_ACTION_MOVE);
+
+  } catch (ex) { is("Exception", ex, "Exception"); }
+}
+
+function accessWithPrivilege(dt, eventType, expectedData)
+{
+//  netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+//  is(dt.getData("text/plain"), expectedData, eventType + " getData with privilege contains text/plain data");
+}
+
+function eventReceived(event)
+{
+  try {
+
+  var dt = event.dataTransfer;
+
+  if (gIsSynthesized && !(event.type in gEvents)) {
+    is(dt.dropEffect, "none", "synthesized " + event.type + " dropEffect");
+    is(dt.effectAllowed, "uninitialized", "synthesized " + event.type + " effectAllowed");
+    is(dt.getData("text/plain"), "", "synthesized " + event.type + " getData");
+    dt.setData("text/plain", "Sample Text");
+    dt.dropEffect = "none";
+    dt.effectAllowed = "link";
+    return;
+  }
+
+  if ((event.type == "draggesture" || event.type == "dragstart" ||
+       event.type == "dragdrop" || event.type == "dragend") &&
+      gEvents[event.type])
+    is(0, 1, event.type + " fired more than once")
+
+  if (event.type == "drag" && event.target != gDragSource)
+    is(0, 1, "wrong target for " + event.type + " event" + event.target.id);
+
+  // if gDragSource is not set, assume an external drag
+  if (!gDragSource) {
+    gExpectedDropEffect = "move";
+    gInitialEffectAllowed = "uninitialized";
+  }
+
+  if (!(event.type in gEvents)) {
+    if (event.type == "draggesture" || event.type == "dragstart") {
+      is(dt.dropEffect, "none", event.type + " dropEffect");
+      is(dt.effectAllowed, "uninitialized", event.type + " effectAllowed");
+    }
+    else {
+      var expectedDropEffect;
+      if (event.type == "drag" || event.type == "dragexit" || event.type == "dragleave" ||
+          (event.type == "dragend" && gDragSource.id.indexOf("image-no") == 0))
+        expectedDropEffect = "none";
+      else if (event.type == "dragenter" || event.type == "dragover")
+        expectedDropEffect = gExpectedDropEffect;
+      else if (gDragSource)
+        expectedDropEffect = gDragSource.getAttribute("dropeffectdrop") || gExpectedDropEffect;
+      else
+        expectedDropEffect = "move";
+
+      is(dt.dropEffect, expectedDropEffect, event.type + " dropEffect");
+      is(dt.effectAllowed, gInitialEffectAllowed, event.type + " effectAllowed");
+
+      if (gDragSource.id == "image-new") {
+        is(dt.mozItemCount, 2, event.type + " itemCount");
+        is(dt.types.length, 2, event.type + " types length");
+        is(dt.mozTypesAt(0).length, 2, event.type + " typesAt 0 length");
+        is(dt.mozTypesAt(1).length, 1, event.type + " typesAt 1 length");
+        is(dt.types[0], "text/plain", event.type + " types element 0 type has text/plain");
+        is(dt.types[1], "text/html", event.type + " types element 0 type has text/html");
+        is(dt.mozTypesAt(0)[0], "text/plain", event.type + " typesAt element type has text/plain");
+        is(dt.mozTypesAt(0)[1], "text/html", event.type + " typesAt element type has text/html");
+        is(dt.mozTypesAt(1)[0], "application/-moz-node", event.type + " typesAt element 1 is application/-moz-node");
+      }
+      else if (gDragSource.id == "image-old-multi") {
+        is(dt.mozItemCount, 2, event.type + " itemCount");
+        is(dt.types.length, 1, event.type + " types length");
+        is(dt.mozTypesAt(0).length, 1, event.type + " typesAt 0 length");
+        is(dt.mozTypesAt(1).length, 1, event.type + " typesAt 1 length");
+        is(dt.types[0], "text/plain", event.type + " types element 0 type has text/plain");
+        is(dt.mozTypesAt(0)[0], "text/plain", event.type + " types element 0 type has text/plain");
+        is(dt.mozTypesAt(1)[0], "text/plain", event.type + " types element 1 type has text/plain");
+      }
+      else {
+        is(dt.mozItemCount, 1, event.type + " itemCount");
+        if (gDragSource.id == "image-chrome-before") {
+          is(dt.types.length, 2, event.type + " types length");
+          is(dt.types[0], "text/plain", event.type + " types has text/plain");
+          is(dt.types[1], "text/xml", event.type + " types has text/xml");
+        }
+        else if (gDragSource.id == "image-mod-link") {
+          is(dt.types.length, 2, event.type + " types length");
+          is(dt.types[0], "text/xml", event.type + " types has text/xml");
+          is(dt.types[1], "text/plain", event.type + " types has text/plain");
+        }
+        else {
+          is(dt.types[0], "text/plain", event.type + " types has text/plain");
+        }
+      }
+
+      var expectedData = "happy.png";
+      if (!gDragSource)
+        expectedData = "http://www.mozilla.org/images/feature-logos1.png";
+      else if (gDragSource.id.indexOf("image-chrome") == 0)
+        expectedData = "Chrome Set Text";
+
+      function fnGetData()
+      {
+        is(dt.getData("text/plain"), expectedData, event.type + " getData contains text/plain data");
+      }
+      
+      function fnGetDataAt()
+      {
+        is(dt.mozGetDataAt("text/plain", 0), expectedData, event.type + " getDataAt contains text/plain data");
+      }
+
+      if ((gDragSource && gDragSource.id.indexOf("image-chrome") == -1) ||
+          event.type == "drop" || event.type == "dragdrop") {
+        fnGetData();
+        fnGetDataAt();
+        if (gDragSource.id == "image-old-multi") {
+          is(dt.mozGetDataAt("text/plain", 1), "Second Text", event.type + " getData contains list text/plain data element 1");
+          is(dt.mozGetDataAt("text/unicode", 1), "Second Text", event.type + " getData contains list text/unicode data element 1");
+        }
+      }
+      else {
+        var name = gDragSource ? gDragSource.id : "external";
+        expectError(fnGetData,
+                    "NS_ERROR_DOM_SECURITY_ERR", event.type + " getData for " + name + " drag");
+        expectError(fnGetDataAt,
+                    "NS_ERROR_DOM_SECURITY_ERR", event.type + " getDataAt for " + name + " drag");
+        accessWithPrivilege(dt, event.type, expectedData);
+      }
+
+      if (gDragSource) {
+        if (gDragSource.id == "image-chrome-before") {
+          is(dt.getData("text/xml"), "<data>image.png</data>", "text/xml still accessible getData");
+          is(dt.mozGetDataAt("text/xml", 0), "<data>image.png</data>", "text/xml still accessible getDataAt");
+        }
+
+        if (gDragSource.id == "image-new" &&
+            event.type != "draggesture" && event.type != "dragstart") {
+          // for this image, check some additional data
+          is(dt.mozGetDataAt("text/html", 0), "<img src='happy.png'>", event.type + " check text/html data");
+          is(dt.mozGetDataAt("application/-moz-node", 1), gDragSource, event.type + " check node data");
+        }
+      }
+
+      expectError(function() dt.setData("text/plain", "Some Text"),
+                  "NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR", event.type + " setData when read only");
+      expectError(function() dt.clearData("text/plain"),
+                  "NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR", event.type + " clearData when read only");
+      expectError(function() dt.mozSetDataAt("text/plain", "Some Text", 0),
+                  "NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR", event.type + " setDataAt when read only");
+      expectError(function() dt.mozClearDataAt("text/plain", 0),
+                  "NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR", event.type + " clearDataAt when read only");
+      expectError(function() dt.setDragImage(gDragSource || document.documentElement, 10, 10),
+                  "NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR", event.type + " setDragImage when read only");
+      expectError(function() dt.addElement(gDragSource || document.documentElement),
+                  "NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR", event.type + " addElement when read only");
+    }
+
+    if (event.type == "drag" || event.type == "dragend") {
+      is(event.clientX, 0, event.type + " clientX");
+      is(event.clientY, 0, event.type + " clientY");
+      is(event.screenX, 0, event.type + " screenX");
+      is(event.screenY, 0, event.type + " screenY");
+    }
+    else if (event.clientX > 0 && event.clientY > 0) {
+      is(event.clientX, event.clientX, event.type + " clientX");
+      is(event.clientY, event.clientY, event.type + " clientY");
+      is(event.screenX, event.screenX, event.type + " screenX");
+      is(event.screenY, event.screenY, event.type + " screenY");
+    }
+    else {
+      is(event.clientX, "Non zero", event.type + " clientX");
+      is(event.clientY, "Non zero", event.type + " clientY");
+      is(event.screenX, "Non zero", event.type + " screenX");
+      is(event.screenY, "Non zero", event.type + " screenY");
+    }
+  }
+
+  if (event.type == "dragenter" || event.type == "dragover") {
+    if (gDragSource) {
+      if (gDragSource.id == "image-mod-link") {
+        dt.dropEffect = "link";
+      }
+      else if (gDragSource.id == "image-mod-copy") {
+        dt.effectAllowed = "copyLink";
+        dt.dropEffect = "copy";
+      }
+      else if (gDragSource.id == "image-none") {
+        dt.dropEffect = "none";
+      }
+      else if (gDragSource.id == "image-no-invde") {
+        dt.dropEffect = "link";
+      }
+      else if (gDragSource.id == "image-no-mod-invde") {
+        dt.effectAllowed = "copyLink";
+        dt.dropEffect = "move";
+      }
+    }
+
+    if (!gDragSource || gDragSource.id != "image-nocancel")
+      event.preventDefault();
+  }
+
+  // for these events, changing the effectAllowed and dropEffect should have
+  // no effect
+  if (event.type == "drag" || event.type == "dragexit" || event.type == "dragleave" ||
+      event.type == "dragend" || event.type == "drop" || event.type == "dragdrop") {
+    dt.effectAllowed = "copy";
+    dt.dropEffect = "copy";
+  }
+
+  // try sending a synthetic event. Anything that happens during the
+  // synthetic event should not affect anything.
+  if ( 0 && !(event.type in gEvents)) {
+    var realDropEffect = dt.dropEffect;
+    var realEffectAllowed = dt.effectAllowed;
+    gIsSynthesized = true;
+    var evt = document.createEvent("dragevent");
+    evt.initDragEvent(event.type, true, true, window, 0, null);
+    document.getElementById("area").dispatchEvent(evt);
+    gIsSynthesized = false;
+    is(dt.dropEffect, realDropEffect, event.type + " dropEffect not changed by synthesized event");
+    is(dt.effectAllowed, realEffectAllowed, event.type + " effectAllowed not changed by synthesized event");
+  }
+
+  if (event.type in gEvents)
+    gEvents[event.type]++;
+  else
+    gEvents[event.type] = 1;
+
+  if (event.type == "dragover") {
+    if (gEvents["dragover"] == 16 && (!gDragSource || gEvents["drag"] >= 15)) {
+      document.getElementById("area").style.border = "2px solid orange";
+      document.getElementById("caption").label = "Drop Now";
+    }
+  }
+  else if (event.type == "dragend") {
+    document.getElementById("area").style.border = "2px solid purple";
+    document.getElementById("caption").label = "Drag Image Below";
+    if (gEvents["dragend"] > 1) {
+      is(0, 1, "dragend fired more than once");
+      return;
+    }
+    if (event.target != gDragSource)
+      is(0, 1, "wrong target for dragend event");
+
+    var dropok = gDragSource.id.indexOf("image-no") == 0 ?
+                 !gEvents["dragdrop"] && !gEvents["drop"] :
+                 gEvents["dragdrop"] && gEvents["drop"];
+
+    if (gEvents["drag"] < 16 || gEvents["dragover"] < 16)
+      is(0, 1, "Don't drop image until box border turns orange");
+    else if (gEvents["draggesture"] && gEvents["dragstart"] && gEvents["dragenter"] &&
+             gEvents["dragexit"] && gEvents["dragleave"] && dropok) {
+      is("pass", "pass", "passed test for " + gDragSource.id);
+
+      gSources[gDragSource.id] = true;
+      if ("image-new" in gSources &&
+          "image-move" in gSources &&
+          "image-link" in gSources &&
+          "image-copy" in gSources &&
+          "image-mod-copy" in gSources &&
+          "image-mod-link" in gSources &&
+          "image-old" in gSources &&
+          "image-old-multi" in gSources &&
+          "image-none" in gSources &&
+          "image-no-invde" in gSources &&
+          "image-no-mod-invde" in gSources &&
+          "image-nocancel" in gSources &&
+          "image-chrome-before" in gSources &&
+          "image-chrome-after" in gSources)
+        is("passall", "passall", "passall");
+    }
+    else {
+     is(0, 2, gEvents["draggesture"] + "," + gEvents["dragstart"] + "," + gEvents["dragenter"] + "," +
+             gEvents["dragexit"] + "," + gEvents["dragleave"] + "," +
+             gEvents["drop"] + "," + gEvents["drop"]);
+      is (0, 1, "dragend fired before all events received");
+    }
+
+    gEvents = { };
+  }
+
+  } catch (ex) { is("Exception", ex, "Exception"); }
+}
+
+function is(l, r, message)
+{
+  var failed = (l !== r);
+
+  var output = document.getElementById("output");
+
+  if (failed) {
+    output.style.backgroundColor = "red";
+    var str = gFailed ? "" : "---- TEST FAILED ----\n\n";
+    output.textContent = str + output.textContent + "FAILED: " + message +
+                         " Expected: " + r + ", Got : " + l + "\n";
+    gFailed = true;
+  }
+  else if (message == "passall") {
+    if (!gFailed) {
+      output.style.backgroundColor = "lightgreen";
+      output.textContent = "---- PASSED ALL TESTS ----\n\n" + output.textContent;
+    }
+  }
+  else {
+    output.textContent += "OK: " + message + " " + l + "," + r + "\n";
+  }
+}
+
+function expectError(fn, eid, testid)
+{
+  var error = "";
+  try {
+    fn();
+  } catch (ex) {
+    error = ex.name;
+  }
+  is(error, eid, testid + " causes exception " + eid);
+}
+
+]]>
+</script>
+
+<hbox>
+
+<!-- this image checks normal dragging without changing anything -->
+<image id="image-new" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event);"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+<!-- checks with setting a specific dropEffect and effectAllowed -->
+<image id="image-move" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event, 'move', 'linkMove');"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"
+       dropeffectover="move" dropeffectdrop="move"/>
+
+<!-- checks that changing dropEffect in the draggesture handler should have no effect -->
+<image id="image-link" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event, 'copy', 'link');"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"
+       dropeffectover="link"
+       dropeffectdrop="link"/>
+
+<!-- checks when move is not allowed, the default from keypresses should switch to copy -->
+<image id="image-copy" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event, 'move', 'copyLink');"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"
+       dropeffectover="copy"
+       dropeffectdrop="copy"/>
+
+<!-- checks when dropEffect is modified within the dragover event -->
+<image id="image-mod-link" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event, 'move', 'all');"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"
+       dropeffectover="move" dropeffectdrop="link"/>
+
+<!-- checks when effectAllowed and dropEffect is modified within the dragover event -->
+<image id="image-mod-copy" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event, 'move', 'all');"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"
+       dropeffectover="move" dropeffectdrop="copy"/>
+
+<!-- test using the old drag service API -->
+<image id="image-old" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event);"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+<!-- test using the old drag service API with mutliple items -->
+<image id="image-old-multi" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event);"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+<!-- test where the outer dragdrop-dr-events-outer.xul parent frame running in chrome
+     sets the text/plain data before this frame does -->
+<image id="image-chrome-before" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event);"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+<!-- test where the outer dragdrop-dr-events-outer.xul parent frame running in chrome
+     sets the text/plain data after this frame does -->
+<image id="image-chrome-after" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event);"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+</hbox>
+
+<hbox>
+
+<!-- checks when dropEffect is set to none within the dragover event -->
+<image id="image-none" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event);"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+<!-- checks when dropEffect is set to a value not in the initial effectsAllowed within the dragover event -->
+<image id="image-no-invde" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event, 'move', 'copyMove');"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+<!-- checks when effectAllowed and dropEffect is modified and dropEffect is not valid within the dragover event -->
+<image id="image-no-mod-invde" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event, 'move', 'copyMove');"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+<!-- checks when the dragover event is not cancelled -->
+<image id="image-nocancel" src="data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%00%18%00%00%00%18%02%03%00%00%00%9D%19%D5k%00%00%00%04gAMA%00%00%B1%8F%0B%FCa%05%00%00%00%0CPLTE%FF%FF%FF%FF%FF%FF%F7%DC%13%00%00%00%03%80%01X%00%00%00%01tRNS%08N%3DPT%00%00%00%01bKGD%00%88%05%1DH%00%00%00%09pHYs%00%00%0B%11%00%00%0B%11%01%7Fd_%91%00%00%00%07tIME%07%D2%05%0C%14%0C%0D%D8%3F%1FQ%00%00%00%5CIDATx%9C%7D%8E%CB%09%C0%20%10D%07r%B7%20%2F%E9wV0%15h%EA%D9%12D4%BB%C1x%CC%5C%1E%0C%CC%07%C0%9C0%9Dd7()%C0A%D3%8D%E0%B8%10%1DiCHM%D0%AC%D2d%C3M%F1%B4%E7%FF%10%0BY%AC%25%93%CD%CBF%B5%B2%C0%3Alh%CD%AE%13%DF%A5%F7%E0%03byW%09A%B4%F3%E2%00%00%00%00IEND%AEB%60%82"
+       width="40" height="40"
+       ondragstart="eventReceived(event);"
+       ondraggesture="eventReceived(event); startDrag(event, 'move', 'all');"
+       ondrag="eventReceived(event);"
+       ondragend="eventReceived(event);"/>
+
+</hbox>
+
+<spacer class="separator" height="50"/>
+
+<groupbox minwidth="550" minheight="100" flex="1"
+          ondragexit="eventReceived(event);"
+          ondragleave="eventReceived(event);">
+  <caption id="caption" label="Drag Image Here"/>
+  <hbox id="area" align="start" flex="1" style="border: 2px solid purple; white-space: pre;"
+        ondragenter="eventReceived(event); event.preventDefault();"
+        ondragover="eventReceived(event); event.stopPropagation();"
+        ondragdrop="eventReceived(event); event.stopPropagation();"
+        ondrop="eventReceived(event); dodrop(event);">
+
+    <description/>
+  </hbox>
+</groupbox>
+
+<vbox width="550" height="150" style="overflow: scroll">
+  <description id="output" height="150" style="white-space: pre;"/>
+</vbox>
+
+</window>
+

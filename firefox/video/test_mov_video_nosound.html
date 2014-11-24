@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <title>MOV video via &lt;object&gt; (silent)</title>
+  <script type="text/javascript">
+    var movie;
+    var seekTime;
+
+    function init() {
+      movie = document.getElementById("movie");
+      seekTime = document.getElementById("seekField");
+    }
+
+    function play() {
+      movie.Play();
+    }
+
+    function pause() {
+      movie.Stop();
+    }
+
+    function stop() {
+      movie.Rewind();
+    }
+
+    function seek() {
+      movie.SetTime(parseInt(seekTime.value, 10));
+    }
+  </script>
+</head>
+<body onload="init();">
+  <h1>Sample MOV Video:</h1>
+
+  <object type="video/quicktime"
+          data="sample-video-10s-nosound.mov"
+          width="640"
+          height="480"
+          id="movie">
+    <param name="movie"
+           value="sample-video-10s-nosound.mov" />
+    <param name="autoplay"
+           value="false" />
+  </object>
+  <br />
+
+  <a href="#" onclick="play()" id="play">play</a>
+  <a href="#" onclick="pause()" id="pause">pause</a>
+  <a href="#" onclick="stop()" id="stop">stop</a>
+  <input type="number" id="seekField" value="0" />
+  <a href="#" onclick="seek()" id="seek">seek</a>
+</body>
+</html>

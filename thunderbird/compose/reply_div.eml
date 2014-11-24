@@ -1,0 +1,18 @@
+Date: Thu, 29 Oct 2009 22:09:56 -0500
+From: Example <example@example.org>
+Subject: Bug 525359 testcase 
+To: example@example.com
+Message-id: <4AEA5904.3090307@example.com>
+MIME-version: 1.0
+Content-type: text/html; charset=ISO-8859-1
+Content-transfer-encoding: 7bit
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+</head>
+<body>
+  <div contenteditable="true">Original text</div>
+</body>
+</html>
+

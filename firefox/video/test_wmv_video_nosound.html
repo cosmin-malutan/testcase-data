@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <title>WMV video via &lt;embed&gt; (silent)</title>
+  <script type="text/javascript">
+    var movie;
+    var movieAction;
+    var seekTime;
+
+    function init() {
+      movie = document.getElementById("movie");
+      seekTime = document.getElementById("seekField");
+
+      // Flip4Mac uses an older version of the WMV SDK that does not have the controls object
+      if (movie.controls) {
+        movieAction = movie.controls;
+      } else {
+        movieAction = movie;
+      }
+    }
+
+    function play() {
+      movieAction.play();
+    }
+
+    function pause() {
+      movieAction.pause();
+    }
+
+    function seek() {
+      // Flip4Mac uses an older version of the WMV SDK that needs a string input for setting the CurrentPosition
+      if (movie.controls) {
+        movieAction.currentPosition = parseInt(seekTime.value, 10);
+      } else {
+        movieAction.CurrentPosition = seekTime.value;
+      }
+    }
+  </script>
+</head>
+<body onload="init();">
+  <h1>Sample WMV Video:</h1>
+
+  <embed type="application/x-ms-wmp"
+         width="640"
+         height="480"
+         id="movie"
+         src="sample-video-10s-nosound.wmv"
+         autostart="false">
+  </embed>
+  <br />
+
+  <a href="#" onclick="play()" id="play">play</a>
+  <a href="#" onclick="pause()" id="pause">pause</a>
+  <span id="seekBox">
+  <input type="number" id="seekField" value="0" />
+  <a href="#" onclick="seek()" id="seek">seek</a>
+  </span>
+</body>
+</html>

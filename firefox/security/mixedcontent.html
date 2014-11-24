@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script>
+    function init() {
+      var img = document.getElementById("img");
+      img.src = img.src.replace("https", "http");
+    }
+  </script>
+  <title>Mixed Content</title>
+</head>
+<body onload="init();">
+  <p>To ensure this testcase is working as expected, it has to be loaded via an SSL connection.</p>
+  <img id="img" src="../images/mozilla_logo.jpg" />
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Browser context menu</title>
+    <style>
+      table { border-collapse: collapse; }
+      table td, table th { border: 1px solid black; padding: 5px; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <h2>Element needed in order to test the context menu</h2>
+    <h4> Text area</h4>
+    <textarea id="test-textarea" rows="1" cols="30">testTextArea</textarea>
+
+    <h4>Canvas</h4>
+    <canvas id="test-canvas" width="200" height="100" style="background-color: turquoise"></canvas>
+
+    <h4>Different types of inputs</h4>
+    <input id="test-input-spellcheck" spellcheck="true" autofocus value="testInputWithSpellcheck"></input>
+    <br />
+    <input id="test-select-input-text" value="testInputField"></input>
+    <br />
+    <input id="test-select-input-text-type-password" type="password" value="password"></input>
+    <br />
+    <input id="test-input"></input>
+    <br />
+
+    <h4>Images - simple and linked</h4>
+    <table>
+      <tr>
+        <td>Simple image</td>
+        <td>Linked image</td>
+      </tr>
+      <tr>
+        <td><img id="test-image" src="../images/mozilla_logo.jpg" width="50" height="50" /></td>
+        <td><a id="test-image-link" href="#"><img src="../images/mozilla_logo.jpg" width="50" height="50" /></a></td>
+      </tr>
+    </table>
+
+    <h4>Different types of links</h4>
+    <table>
+      <tr>
+        <td>Plain text link</td>
+        <td>Mailto link</td>
+      </tr>
+      <tr>
+        <td><a id="test-link" href="http://mozilla.com">ClickTheLink</a></td>
+        <td><a id="test-mailto" href="mailto:noone@mozilla.com">MailToTink</a></td>
+      </tr>
+    </table>
+
+    <h4>Different types of videos</h4>
+    <table>
+      <tr>
+        <td>Video with valid media source</td>
+        <td>Invalid video</td>
+      </tr>
+      <tr>
+        <td>
+          <video controls id="test-video-good"
+                 preload="auto"
+                 src="http://mozqa.com/data/firefox/video/sample-video-10s-nosound.webm"
+                 width="200" height="100" style="background-color: white">
+          </video>
+        </td>
+        <td>
+          <video id="test-audio-in-video"
+                 preload="auto"
+                 src="http://mozqa.com/data/firefox/video/audio.ogg"
+                 width="200" height="100" style="background-color: teal">
+          </video>
+        </td>
+      </tr>
+      <tr>
+        <td>Video with invalid media source</td>
+        <td>Video with wrong type</td>
+      </tr>
+      <tr>
+        <td>
+          <video controls id="test-video-wrong-source"
+                 preload="auto"
+                 src="wrong.source"
+                 width="200" height="100" style="background-color: navy">
+          </video>
+        </td>
+        <td>
+          <video controls id="test-video-wrong-type"
+                 preload="auto"
+                 width="200" height="100" style="background-color: turquoise">
+            <source src="wrong.type" type="video/wrong;">
+          </video>
+        </td>
+      </tr>
+    </table>
+
+    <h4>Div elements</h4>
+    <table>
+      <tr>
+        <td>Plain text</td>
+        <td>Div with content editable</td>
+        <td>Div that contains a link</td>
+      </tr>
+      <tr>
+        <td><div id="test-text">TestText</div></td>
+        <td><div id="test-contenteditable" contenteditable="true">testContentEditable</div></td>
+        <td><div id="test-select-text-link">http://mozilla.com</div></td>
+      </tr>
+    </table>
+
+    <h4>Items in iFrames</h4>
+    <table>
+      <tr>
+        <td>iFrame</td>
+        <td>Video in iFrame</td>
+        <td>Image in iFrame</td>
+      </tr>
+      <tr>
+        <td>
+          <iframe id="test-iframe" width="100" height="100"
+                  style="background-color: turquoise">
+          </iframe>
+        </td>
+        <td>
+          <iframe id="test-video-in-iframe" width="100" height="100"
+                  src="http://mozqa.com/data/firefox/video/test_ogv_video_nosound.html">
+          </iframe>
+        </td>
+        <td>
+          <iframe id="test-image-in-iframe" src="../images/mozilla_logo.jpg"
+                  width="100" height="100" style="background-color: turquoise">
+          </iframe>
+        </td>
+      </tr>
+    </table>
+
+    <h4>Other tags</h4>
+    <table>
+      <tr>
+        <td>Embed tag</td>
+        <td>Object tag</td>
+      </tr>
+      <tr>
+        <td>
+          <embed autoplay="false" id="test-plugin"
+                 src="http://mozqa.com/data/firefox/plugins/flash/sample-flv-video-10s-nosound.flv"
+                 style="width: 200px; height: 200px;">
+          </embed>
+        </td>
+        <td>
+          <object id="test-object" data="http://mozqa.com/data/firefox/plugins/flash/cookies/get_flash_cookie.swf"
+                  width="200" height="200">
+          </object>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

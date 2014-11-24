@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"> <head> <script>
+function dodrop(event)
+{
+  var dt = event.dataTransfer;
+  var count = dt.mozItemCount;
+
+  for (var i = 0; i < count; i++) { 
+    var types = dt.mozTypesAt(i);
+    var printable = ""
+    for (var t = 0; t < types.length; t++) {      
+      if (types[t] == "text/plain" && printable == "")
+      {
+        try {
+          printable = dt.mozGetDataAt(types[t], i);
+        } catch (ex) {}
+      }
+
+      if (types[t] == "application/x-moz-file" && printable == "")
+      {
+        try {
+          printable = "External File"
+        } catch (ex) {}
+      }
+
+      if (types[t] == "text/html" && printable == "")
+      {
+        try {
+          printable = dt.mozGetDataAt(types[t], i);
+        } catch (ex) {}
+      }
+    }
+    output("<li>" + printable);
+  }
+}
+
+function output(text)
+{
+//  document.getElementById("output").textContent += text;
+  document.getElementById("history").innerHTML += "" + text + "";
+  dump(text);
+}
+
+</script>
+</head>
+<body>
+
+<br />
+Drag each item into the drop box and verify it displays in the display area:<br />
+<br />
+<ul>
+<li><a href="http://www.mozilla.com">mozilla.com</a>
+<br />
+<br />
+<li><img src="https://developer.mozilla.org/skins/mozilla/Fox3/img/mdc-logo.png" height="20">
+<br />
+<br />
+<li>Select me and drag
+</ul>
+<br />
+<br />
+
+
+<br />
+<br />
+Drop box:<br />
+<br />
+<div id="output" style="min-height: 100px; white-space: pre; border: 1px solid black;"
+     ondragenter="document.getElementById('output').textContent = ''; event.stopPropagation(); event.preventDefault();"
+     ondragover="event.stopPropagation(); event.preventDefault();"
+     ondrop="event.stopPropagation(); event.preventDefault(); dodrop(event);">
+</div>
+
+<br />
+<br />
+Display area:<br />
+<br />
+<div id="history" style="border: 1px solid black;">
+<br />
+<br />
+<ul>
+</div>
+
+</body>
+</html>

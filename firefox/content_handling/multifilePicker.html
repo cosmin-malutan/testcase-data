@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<body onload="update()">
+Clicking this input should let you select multiple files.
+<input id=fm type=file onchange="update()" multiple>
+<pre id=pm></pre>
+<hr>
+Clicking this input should only let you select a single files.
+<input id=fs type=file onchange="update()">
+<pre id=ps></pre>
+<hr>
+Do the following:
+<ol>
+  <li>Click on the first file-control.
+  <br>This should bring up a filepicker that lets you select multiple
+  files
+  <li>Select two or more files and click 'ok'
+  <br>This should list the names and filesizes of all selected
+  files. Ensure that the files you selected are listed.
+  <li>Click on the second file-control
+  <br>This should bring up a filepicker that only lets you select a
+  single file
+  <li>Select one file and click 'ok'
+  <br>This should list the name and filesize of the selected file.
+  Ensure that the files you selected are listed.
+  <li>Crash the browser
+  <li>Restart the browser and restore the session
+  <br>All the files should still be listed, for both controls
+
+
+<script>
+pm = document.getElementById('pm');
+fm = document.getElementById('fm');
+ps = document.getElementById('ps');
+fs = document.getElementById('fs');
+
+function update() {
+  str = "";
+  for (i = 0; i < fm.files.length; ++i) {
+    str += fm.files[i].name + " (" + fm.files[i].size + " bytes)\n";
+  }
+  pm.textContent = str;
+
+  str = "";
+  for (i = 0; i < fs.files.length; ++i) {
+    str += fs.files[i].name + " (" + fs.files[i].size + " bytes)\n";
+  }
+  ps.textContent = str;
+}
+</script>
+</body>
+</html>

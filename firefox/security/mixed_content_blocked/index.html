@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Mixed Content Blocking</title>
+    <style>
+    .test {
+      color: #080;
+      margin: 1em;
+      padding: 1em;
+      border: 1px solid #080;
+      border-radius: 5px;
+    }
+    .fail {
+      border-color: red;
+      color: red;
+    }
+    iframe {
+      vertical-align: middle;
+      border-radius: 5px;
+      border-width: 1px;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="test">
+      Secure iframe:
+      <iframe id="frame" src="iframe.html"></iframe>
+    </div>
+    <pre id="log"></pre>
+    <script>
+      function log(s) {
+        var log = document.getElementById("log");
+        log.textContent = log.textContent + s + "\n";
+      }
+    </script>
+  </body>
+</html>

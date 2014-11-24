@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<script type="text/javascript">
+  function add(a, b)
+  {
+    return a+b;
+  }
+</script>
+
+<script type="text/javascript">
+  function dotest()
+  {
+    var retVal2 = add(2, 3);
+    document.getElementById("retval").textContent += " : " + retVal2;
+  }
+</script>
+
+
+<script type="text/javascript">
+  function mul(a, b)
+  {
+    return a * b;
+  }
+</script>
+
+</head>
+<body>
+<script type="text/javascript">
+  var retVal = mul(2,3);
+  document.getElementById("retval").textContent = retVal;
+  if (document.getElementById("retval").textContent == "6")
+  {
+    document.getElementById("retval").textContent = "PASSED";
+  }
+  else
+  {
+    document.getElementById("retval").textContent = "FAILED";
+  }
+</script>
+<div id="retval">
+FAILED
+</div>
+</body>
+</html>

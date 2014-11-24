@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<title> Embedded PDFs </title>
+</head>
+<body>
+<div>
+  <p> PDF embedded using the OBJECT tag</p>
+  <object data="test.pdf" type="application/pdf" width="300" height="200"></object>
+</div>
+<div>
+  <p> PDF embedded using the EMBED tag (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=738967">Bug 738967</a> - pdf.js doesn't work for embedded PDFs) </p>
+  <embed src="test.pdf" type="application/pdf" width="300" height="200"/>
+</div>
+</body>
+</html>

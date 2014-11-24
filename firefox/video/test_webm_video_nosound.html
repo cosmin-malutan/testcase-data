@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <title>WEBM video via &lt;video&gt; (silent)</title>
+  <script type="text/javascript">
+    var currentTime;
+    var movie;
+    var seekTime;
+
+    function init() {
+      currentTime = document.getElementById("currentTime");
+      movie = document.getElementById("movie");
+      seekTime = document.getElementById("seekField");
+
+      movie.addEventListener("timeupdate", updateTime, true);
+      window.onunload = tearDown;
+    }
+
+    function play() {
+      movie.play();
+    }
+
+    function pause() {
+      movie.pause();
+    }
+
+    function seek() {
+      movie.currentTime = parseInt(seekTime.value, 10);
+    }
+
+    function updateTime(aEvent) {
+      currentTime.value = aEvent.target.currentTime;
+    }
+
+    function tearDown() {
+      movie.removeEventListener("timeupdate", updateTime, true);
+    }
+  </script>
+</head>
+<body onload="init();">
+  <h1>Sample WEBM Video:</h1>
+
+  <video id="movie" preload="auto" src="sample-video-10s-nosound.webm"></video>
+  <br />
+
+  <a href="#" onclick="play()" id="play">play</a>
+  <a href="#" onclick="pause()" id="pause">pause</a>
+  <input type="number" id="seekField" value="0" />
+  <a href="#" onclick="seek()" id="seek">seek</a>
+  <input type="text" id="currentTime" placeholder="Current Time"/>
+</body>
+</html>

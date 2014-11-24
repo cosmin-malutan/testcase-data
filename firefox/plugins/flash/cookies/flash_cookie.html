@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <title>Flash Cookie</title>
+    <meta charset="utf-8">
+    <script>
+      function init() {
+        getCookie();
+      }
+
+      function getCookie() {
+        var getFlashCookie = document.getElementById("get_flash_cookie");
+        getFlashCookie.click();
+      }
+
+      function setCookie() {
+        var input = document.getElementById("cookieValue");
+        var setFlashCookie = document.getElementById("set_flash_cookie");
+
+        setFlashCookie.click(input.value);
+        input.value = '';
+
+        getCookie();
+      }
+
+      function clearCookie() {
+        var setFlashCookie = document.getElementById("set_flash_cookie");
+        setFlashCookie.clear("");
+
+        var result = document.getElementById("result");
+        result.value = "Success";
+
+        getCookie();
+      }
+
+      function fromFlashSetCookie(aCookieValue) {
+        var result = document.getElementById("result");
+        document.getElementById("result_get").value = aCookieValue;
+
+        if (aCookieValue == "non-unique") {
+          result.value = "Non-unique";
+        } else {
+          result.value = "Success";
+        }
+      }
+
+      function fromFlashGetCookie(aCookieValue) {
+        document.getElementById("result_get").value = aCookieValue;
+      }
+    </script>
+  </head>
+  <body onload="init()">
+    <p>
+      <input type="text" id="cookieValue" placeholder="Please enter cookie value" />
+      <input type="button" id="setCookie" onclick="setCookie()" value="Set" />
+      <input type="button" id="getCookie" onclick="getCookie()" value="Get" />
+      <input type="button" id="clearCookie" onclick="clearCookie()" value="Clear" />
+    </p>
+    <p>
+      Current value:<br/>
+      <input id="result_get" readonly/><br />
+      Result:<br/>
+      <input type="text" id="result" />
+    </p>
+
+    <object type="application/x-shockwave-flash" data="set_flash_cookie.swf" name="set_flash_cookie" id="set_flash_cookie" width="0" height="0">
+      <param name="movie" value="set_flash_cookie.swf" />
+      <param name="allowScriptAccess" value="sameDomain" />
+    </object>
+
+    <object type="application/x-shockwave-flash" data="get_flash_cookie.swf" name="get_flash_cookie" id="get_flash_cookie" width="0" height="0">
+      <param name="movie" value="get_flash_cookie.swf" />
+      <param name="allowScriptAccess" value="sameDomain" />
+    </object>
+  </body>
+</html>
+

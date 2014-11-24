@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<style>
+p { font-size: 12px;
+    color: rgb(0, 220, 98);
+    background-color: black;
+}
+body { background-color: black; }
+
+</style>
+<script>
+
+var count = 0;
+var log = "";
+
+// http://maps.google.com/maps?f=q&hl=en&geocode=&q=37.4179948,+-122.0882558&sll=37.417995,-122.088256&sspn=0.01106,0.031393&g=37.4179948,+-122.0882558
+
+function aaa(a) { 
+count ++;
+var d = document.getElementById("d");
+
+if (a.address)
+d.innerHTML = log = log + "<p> " + count +  " lat = " + a.coords.latitude + " long = " + a.coords.longitude + " accuracy = " + a.coords.accuracy +
+                                                        "<p>" + a.address.streetNumber + " " +
+                                                        "<p>" + a.address.street  + " " +
+                                                        "<p>" + a.address.premises  + " " +
+                                                        "<p>" + a.address.city + " " +
+                                                        "<p>" + a.address.county  + " " +
+                                                        "<p>" + a.address.region + " " +
+                                                        "<p>" + a.address.country + " " +
+                                                        "<p>" + a.address.countryCode + " " +
+                                                        "<p>" + a.address.postalCode + " " 
++ "<a href=http://maps.google.com/maps?geocode=&q="+a.coords.latitude+"+"+a.coords.longitude+"> map </a></p>";
+else
+d.innerHTML = log = log + "<p> " + count +  " lat = " + a.coords.latitude + " long = " + a.coords.longitude + " accuracy = " + a.coords.accuracy + "<a href=http://maps.google.com/maps?geocode=&q="+a.coords.latitude+"+"+a.coords.longitude+"> map </a></p>";
+}
+
+function handleError(a) {
+var d = document.getElementById("d");
+d.innerHTML = log = log + "<p> error: " + a.code + "</p>";
+
+}
+
+navigator.geolocation.watchPosition(aaa, handleError)
+
+
+
+</script>
+</head>
+<body>
+<div id="d">
+</body>
+</html>

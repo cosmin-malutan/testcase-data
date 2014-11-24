@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  </head>
+  <body>
+    <p>Insecure script: <span id="result1">did not load</span></p>
+    <script>
+      // load an insecure script from a secure iframe
+      parent.log("Attemping to load insecure script 1.");
+      var s = document.createElement("script");
+      s.src = "scripts/script1.js";
+      document.body.appendChild(s);
+    </script>
+  </body>
+</html>
+

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Camera API - Basic Video Test</title>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+    <script type="text/javascript">
+    /**
+     * Error handler for when the real-time stream is not
+     * functioning correctly that displays the error text
+     * to the user.
+     */
+    function onError(err) {
+      var errorText = document.getElementById('errortext');
+      errorText.textContent = err;
+    }
+
+    /**
+     * Success callback for when the camera stream was
+     * successfully retrieved.
+     *
+     * @param stream the MediaStream object referencing the
+     *               underlying camera
+     */
+    function gotStream(stream) {
+      var video = document.getElementById('monitor');
+      video.src = stream;
+      video.play();
+
+      video.onerror = function() {
+        stream.stop();
+        onError("Stream unexpectedly stopped");
+      };
+
+      stream.onended = onError;
+    }
+
+    /**
+     * Starts streaming video to your camera and displays the video
+     * stream to the user if mozGetUserMedia is enabled.
+     */
+    function streamCameraToVideo() {
+      if (navigator.mozGetUserMedia) {
+        try {
+          navigator.mozGetUserMedia({video: true}, gotStream, onError);
+        } catch (err) {
+          onError(err);
+        }
+      } else {
+        onError("mozGetUserMedia is not enabled");
+      }
+    }
+
+    $(document).ready(function () {
+      streamCameraToVideo();
+    });
+    </script>
+  </head>
+  <body>
+    <h1>Basic Video Test for mozGetUserMedia</h1>
+    <p>
+      If your camera becomes active after this page loads and you see yourself in this page, then this test verifies.
+    </p>
+    <p>
+      Note: You need to set media.navigator.enabled in about:config to true and be running Desktop Firefox 17+ to test this feature.
+    </p>
+    <p id="errortext">No errors found.</p>
+    <video id="monitor" preload="auto"></video>
+  </body>
+</html>

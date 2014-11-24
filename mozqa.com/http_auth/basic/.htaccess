@@ -1,0 +1,5 @@
+
+ AuthType basic
+ AuthName "Basic Authentication for Tests - user: mozilla / password: mozilla"
+ AuthUserFile /data/www/mozqa.com/data/mozqa.com/http_auth/basic/.htpasswd
+ Require  valid-user

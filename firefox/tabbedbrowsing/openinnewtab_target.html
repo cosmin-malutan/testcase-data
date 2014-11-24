@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<title>Open link in a new tab</title>
+<script type="text/javascript">
+  function show() {
+    var results = /\?id=(.+)$/.exec(window.document.location);
+    var id = decodeURIComponent(results[1].replace(/\+/g, " "))
+
+    document.title = id;
+
+    var node = document.createElement("span");
+    node.id = "id";
+    node.textContent = id;
+
+    var result = document.getElementById("result");
+    result.appendChild(node);
+  }
+</script>
+</head>
+
+<body onload="show();">
+  <p id="result">Loaded link with id=</p>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <title>Test Mailto Protocol Handler With Fake Foo Mail</title>
+        <script language="JavaScript">
+            navigator.registerProtocolHandler( 'mailto', 'https://hg.mozilla.org/qa/litmus-data/raw-file/tip/firefox/content_handling/mail?to=%s', 'Foo Mail');
+        </script>
+    </head>
+<body>
+    <h1>Test MailTo: Protocol Handler with FooMail Fake Handler</h1>
+    <p>
+    This page tests web service protocol handling by registering "foomail" as a handler for mailto links.
+    Clicking below should redirect to the address: http://hg.mozilla.org/qa/litmus-data/raw-file/tip/firefox/content_handling/mail?to=noone@mozilla.org.<p>
+    <a href="mailto:noone@mozilla.org">Click here to test it</a>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+
+<html lang="en" dir="ltr">
+  <head>
+    <title>Click Testing for Protocol Handling</title>
+  <body>
+    <p>
+    You can use these links to test various protocol handlers.<br><br>
+    <h2> Mailto Protocol Testing</h2>
+    <ul>
+      <li> Test 1: Open a compose window to noone@mozilla.org <br> 
+        <a href="mailto:noone@mozilla.org"> Test Me!</a>
+      </li>
+      <li> Test 2: Open a compose window to noone@mozilla.org, cc bob@mozilla.org, set
+           subject to "subject", and set body to "hello world"<br>
+        <a href="mailto:noone@mozilla.org?cc=bob@mozilla.org&amp;subject=subject&amp;body=hello%20world">
+          Test Me!</a>
+      </li>
+    </ul>
+    <h3> More <a href="http://www.faqs.org/rfcs/rfc2368.html">RFC 2368</a> Testing</h3>
+    <ul>
+      <li> Test 3: Multiple To Addresses<br>
+        <a href="mailto:addr1@mozilla.org,addr2@foo.com">Test Me!</a>
+      </li>
+      <li> Test 4: Multiple Lines in Body<br>
+        <a href="mailto:addr1@mozilla.org,addr2@foo.com?cc=addr3@foo.com&amp;subject=foo&amp;body=this%20is%20the%20first%20line%0D%0Athis%20is%20the%20second%0D%0Athis%20is%20the%20third">Test Me!</a>
+      </li>
+      <li> Test 5: Invalid mailto URL - this should not work.  Ideally there should be some sort of error message caused by this URL.  Very few implementations tend to create such a message though. <br>
+        <a href="mailto:addr1@foo.com?cc=addr2@foo.com?body=foo">Test Me!</a>
+      </li>
+      <li> Test 6: Use a mailto and a to header - all addresses should be on To line.  We have multiple permutations here. Because it is legal to specify both "to" and an "hname" whose value is "to" we have the following equivalences: mailto:addr1%2C%20addr2 == mailto:?to=addr1%2C%20addr2 == mailto:addr1?to=addr2. This tests all three permutations. <br>
+       <ul>
+         <li><a href="mailto:addr1@foo.com?to=addr2@foo.com&amp;subject=hi%20world&amp;body=more%20text%20here">Test Me: mailto:addr1?to=addr2</a>
+         <li><a href="mailto:addr1@foo.com%2C%20addr2@foo.com">TestMe: - mailto:addr1%2C%20addr2</a>
+         <li><a href="mailto:?to=addr1@foo.com%2C%20addr2@foo.com&amp;subject=hi%20world&amp;body=more%20text%20here">Test Me: mailto:?to=addr1%2C%20addr2</a>
+       </ul>   
+      </li>
+      <li> Test 7: A mailto with embedded ampersands <br>
+        <a href="mailto:addr1@foo.com?bcc=addr2@foo.com&amp;subject=I%20have%20an%20%26&amp;body=this%26that">Test Me!</a>
+      </li>
+      <li> Test 8: A mailto with UTF-8 characters inside it. A <a href="unicodepic.png">picture</a> of how this should look.<br>
+        <a href="mailto:addr1@foo.com?cc=addr2@foo.com&amp;subject=%20%E9%A6%99%20%E9%A6%99%20%E9%A6%99&amp;body=crazy%20characters%20with%20every%E2%BC%ADthing%ED%8C%BDin%C5%92%20%E9%A3%82%20%20%E9%A6%99%20them%20and%20mixed%20up%21">Test Me!</a>
+      </li>
+      <li> Test 9: <strong>Negative Test:</strong> The From parameter in this message should be ignored. <br>
+        <a href="mailto:addr1@foo.com?cc=addr2@foo.com&amp;from=IgnoreThisAddress@foo.com&amp;subject=Bar">Test Me!"</a>
+      </li>
+      <li> Test 10: <strong>Negative Test:</strong> The Bcc parameter in this message should be ignored. <br>
+        <a href="mailto:addr1@foo.com?bcc=addr2@foo.com">Test Me!</a>
+      </li>
+      <li> Test 11: <strong>Unknown behavior:</strong> Some URL form encodings use '+' for a space, so we are throwing some tests in to see what happens when these are encountered in the mailto: URL.  In my opinion, the encoded '+' should display in the mail.  The unencoded '+' will probably fail in some interesting ways. However, my opinion is not the official word on how it should be handled.<br>
+        <ul>
+          <li><a href="mailto:addr1@foo.com?subject=Math%20Is%20Hard&amp;body=2+2">Test Me: the + is not encoded</a>
+          <li><a href="mailto:addr1@foo.com?subject=Math%20Is%20Hard&amp;body=2%2B2">Test Me: the + is URLencoded</a>
+          <li><a href="mailto:addr1@foo.com?subject=Math%20Is%20Hard&amp;body=2+2=4">Test Me: the + and a = is not encoded</a>
+          <li><a href="mailto:addr1@foo.com?subject=Math%20Is%20Hard&amp;body=2%2B2%3D4">Test Me: the + and a = is URLencoded</a>
+        </ul>
+    </ul>
+    <p>
+    <h2>Webcal Protocol Testing</h2>
+    <ul>
+      <li> Test 1: Opens an event called Mozilla's 10th Birthday, on March 31, 2008 at 7PM.<br>
+        <a href="webcal://hg.mozilla.org/qa/litmus-data/raw-file/tip/firefox/content_handling/mozilla.ics"> Test Me!</a>
+      </li>
+      <li> Test 2: Opens a very large web calendar.<br>
+        <a href="webcal://info.vassar.edu/calendar/calendars/campuscalendar.ics">Test Me!</a>
+      </li>
+    </ul>
+  </body>
+</html>

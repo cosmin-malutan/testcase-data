@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Unencrypted Search</title>
+  <script>
+    function init() {
+      document.getElementById("form").action = location.href.replace("https", "http");
+      var searchQuery = /\?q=(.+)$/.exec(location);
+      if (searchQuery !== null) {
+        var searchTerm = searchQuery[1];
+        document.getElementById("q").value = searchTerm;
+        document.getElementById("search-term").textContent = searchTerm;
+        document.getElementById("search-results").style.display = "block";
+      }
+    }
+  </script>
+  <style type="text/css">
+    #search-results {
+      border-top: 1px solid #000;
+      display: none;
+    }
+
+    #search-term {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body onload="init();">
+  <p>To ensure this testcase is working as expected, it has to be loaded via an SSL connection.</p>
+  <form id="form" method="get" action="">
+    <input name="q" id="q">
+    <input type="submit" id="submit">
+  </form>
+  <p id="search-results">Search term was: <span id="search-term"></span></p>
+</body>
+</html>
