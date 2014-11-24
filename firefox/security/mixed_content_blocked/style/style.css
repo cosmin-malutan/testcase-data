@@ -1,3 +1,16 @@
-#styletest {
+.test {
+  color: #080;
+  margin: 1em;
+  padding: 1em;
+  border: 1px solid #080;
+  border-radius: 5px;
+  min-width: 300px;
+}
+.fail {
+  border-color: red;
   color: red;
+}
+iframe {
+  vertical-align: middle;
+  border: none;
 }
