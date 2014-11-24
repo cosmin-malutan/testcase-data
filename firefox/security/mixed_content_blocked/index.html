@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Test Mixed Content Blocking</title>
+    <link rel="stylesheet" type="text/css" href="http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/style/style.css" />
     <style>
     .test {
       color: #080;
@@ -26,6 +27,24 @@
       Secure iframe:
       <iframe id="frame" src="iframe.html"></iframe>
     </div>
+
+    <div class="test">
+      Insecure script 1: <span id="result1">did not load</span>
+    </div>
+
+    <div class="test">
+      Insecure script 2: <span id="result2">did not load</span>
+    </div>
+
+    <div id="plugintest" class="test">
+      Insecure plugin content: <span id="result3">did not load</span>
+    </div>
+
+    <div class="test">
+      Insecure stylesheet: <span id="result4">did not load</span>
+      <span id="styletest">test</span>
+    </div>
+
     <pre id="log"></pre>
     <script>
       function log(s) {
