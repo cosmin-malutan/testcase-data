@@ -3,71 +3,79 @@
   <head>
     <title>Test Mixed Content Blocking</title>
     <link rel="stylesheet" type="text/css" href="style/style.css" />
-    <link rel="stylesheet" type="text/css" href="http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/style/insecure_style.css" />
   </head>
   <body onload="runTests();">
     <div class="test">
-      Secure iframe:
-      <iframe id="frame" src="iframe.html"></iframe>
+      Insecure script 1: <span id="result1">NOT LOADED</span>
     </div>
 
     <div class="test">
-      Insecure script 1: <span id="result1">did not load</span>
-    </div>
-
-    <div class="test">
-      Insecure script 2: <span id="result2">did not load</span>
+      Insecure script 2: <span id="result2">NOT LOADED</span>
     </div>
 
     <div id="plugintest" class="test">
-      Insecure plugin content: <span id="result3">did not load</span>
+      Insecure plugin content: <span id="result3">NOT LOADED</span>
     </div>
 
-    <div class="test">
-      Insecure stylesheet: <span id="result4">did not load</span>
-      <span id="styletest">test</span>
+    <div id="stylesheet" class="test">
+      Insecure stylesheet: <span id="result4"></span>
     </div>
 
     <pre id="log"></pre>
     <script>
+      var baseAddress = window.location.href.replace("https", "http");
+      var insecureAddress = baseAddress.slice(0, baseAddress.lastIndexOf("/"));
+
       function log(s) {
         var log = document.getElementById("log");
         log.textContent = log.textContent + s + "\n";
       }
+
+      window.addEventListener("message", function insecureObject(event) {
+        window.removeEventListener("message", insecureObject, false);
+        log("Received message from " + event.origin + ": " + event.data);
+
+        // look for message from our <object>
+        if (event.data == "object loaded") {
+          var r = document.getElementById("result3");
+          r.textContent = "LOADED";
+          r.parentElement.className = "test fail";
+        }
+      }, false);
+
       function runTests() {
         // Test 1:
-        // load the first insecure script after 1 second so we can test what
-        // happens when the MixedContentBlocked happens in a background tab
+        // load first insecure script
         log("Attemping to load insecure script 1.");
         var s = document.createElement("script");
-        s.src = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/script1.js";
+        s.src = insecureAddress + "/scripts/script1.js";
         document.body.appendChild(s);
 
         // Test 2:
-        // load the second insecure script
-        log("Attemping to load insecure script 2.");
-        var s = document.createElement("script");
-        s.src = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/script2.js";
-        document.body.appendChild(s);
+        // load insecure script inside an iFrame
+        log("Attemping to load insecure script inside an iFrame.");
+        var f = document.createElement("iframe");
+        f.src = "iframe.html";
+        f.id = "frame";
+        document.getElementById("result2").parentNode.appendChild(f);
 
         // Test 3:
         // load an insecure "plugin"
         log("Attempting to load insecure <object> element");
+        window.addEventListener("message", function() {});
         var o = document.createElement("object");
         o.type = "text/html";
-        o.data = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/object.html";
+        o.data = insecureAddress + "/scripts/object.html";
         document.getElementById("result3").appendChild(o);
 
         // Test 4:
-        // check if the insecure stylesheet loaded
-        log("Checking insecure stylesheet status");
-        var t = document.getElementById("styletest");
-        var c = window.getComputedStyle(t, null);
-        if (c.getPropertyValue("color") == "rgb(255, 0, 0)") {
-          var r = document.getElementById("result4");
-          r.textContent = "LOADED";
-          r.parentElement.className = "test fail";
-        }
+        // load an insecure stylesheet loaded
+        log("Attemping to load  insecure stylesheet status");
+        var l = document.createElement("link");
+        l.rel = "stylesheet";
+        l.type = "text/css";
+        l.href= insecureAddress + "/style/insecure_style.css";
+        document.head.appendChild(l);
       }
     </script>
   </body>

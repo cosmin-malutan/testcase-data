@@ -13,5 +13,8 @@
 iframe {
   vertical-align: middle;
   border: none;
-  min-width: 300px;
+  min-width: 350px;
+}
+#result4::before {
+  content: "NOT LOADED";
 }
