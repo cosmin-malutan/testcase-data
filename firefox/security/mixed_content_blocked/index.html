@@ -35,6 +35,29 @@
         log.textContent = log.textContent + s + "\n";
       }
 
+      // Test 1:
+      // load the first insecure script after 1 second so we can test what
+      // happens when the MixedContentBlocked happens in a background tab
+      log("Attemping to load insecure script 1.");
+      var s = document.createElement("script");
+      s.src = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/script1.js";
+      document.body.appendChild(s);
+
+      // Test 2:
+      // load the second insecure script
+      log("Attemping to load insecure script 2.");
+      var s = document.createElement("script");
+      s.src = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/script2.js";
+      document.body.appendChild(s);
+
+      // Test 3:
+      // load an insecure "plugin"
+      log("Attempting to load insecure <object> element");
+      var o = document.createElement("object");
+      o.type = "text/html";
+      o.data = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/object.html";
+      document.getElementById("result3").appendChild(o);
+
       // Test 4:
       // check if the insecure stylesheet loaded
       log("Checking insecure stylesheet status");
