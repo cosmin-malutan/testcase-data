@@ -22,7 +22,7 @@
     }
     </style>
   </head>
-  <body>
+  <body onload="runTests();>
     <div class="test">
       Secure iframe:
       <iframe id="frame" src="iframe.html"></iframe>
@@ -50,6 +50,17 @@
       function log(s) {
         var log = document.getElementById("log");
         log.textContent = log.textContent + s + "\n";
+      }
+
+      // Test 4:
+      // check if the insecure stylesheet loaded
+      log("Checking insecure stylesheet status");
+      var t = document.getElementById("styletest");
+      var c = window.getComputedStyle(t, null);
+      if (c.getPropertyValue("color") == "rgb(255, 0, 0)") {
+        var r = document.getElementById("result4");
+        r.textContent = "LOADED";
+        r.parentElement.className = "test fail";
       }
     </script>
   </body>
