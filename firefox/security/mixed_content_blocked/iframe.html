@@ -3,14 +3,16 @@
   <head>
   </head>
   <body>
-    <p>Insecure script 3: <span id="result3">did not load</span></p>
-    <script>
-      // load an insecure script from a secure iframe
-      parent.log("Attemping to load insecure script 1.");
-      var s = document.createElement("script");
-      s.src = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/script1.js";
-      document.body.appendChild(s);
-    </script>
+    <div class="test">
+      <p>Insecure script 3: <span id="result3">did not load</span></p>
+      <script>
+        // load an insecure script from a secure iframe
+        parent.log("Attemping to load insecure script 1.");
+        var s = document.createElement("script");
+        s.src = "http://cosmin-malutan.github.io/testcase-data/firefox/security/mixed_content_blocked/scripts/script1.js";
+        document.body.appendChild(s);
+      </script>
+    </div>
   </body>
 </html>
 
